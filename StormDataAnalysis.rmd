@@ -1,0 +1,165 @@
+---
+title: "Analysis of severity of Storms on United States"
+author: "Babita Daswani"
+date: "25 Jul 2020"
+output: html_document
+---
+
+
+
+## Synopsis
+
+Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern.
+
+This anlysis involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database answeing following quesions:
+
+* Which type of natural events pertaining to storms are most harmful with respect to population health across the United States?
+* Which of these types of events have the greatest economic consequences for the United States?
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r library, warning = FALSE, message = FALSE}
+library(dplyr)
+library(ggplot2)
+```
+
+
+```{r}
+## Reading data
+raw_data <- read.csv("./data/repdata_data_StormData.csv", sep = ",", header = TRUE)
+data <- select(raw_data, c("EVTYPE", "PROPDMG", "CROPDMG", "INJURIES", "FATALITIES"))
+remove(raw_data)
+```
+
+## Analysis
+```{r health_analysis}
+## Total Injuries and fatalities by event type
+fatality_tot <- data %>% 
+  group_by(EVTYPE) %>%
+  summarize(TOTAL = sum(FATALITIES)) %>%
+  arrange(desc(TOTAL))
+injury_tot <- data %>% 
+  group_by(EVTYPE) %>%
+  summarize(TOTAL = sum(INJURIES)) %>%
+  arrange(desc(TOTAL))
+
+## Mean Injuries and fatalities by event type
+fatality_avg <- data %>% 
+  group_by(EVTYPE) %>%
+  summarize(AVG = mean(FATALITIES)) %>%
+  arrange(desc(AVG))
+injury_avg <- data %>% 
+  group_by(EVTYPE) %>%
+  summarize(AVG = mean(INJURIES)) %>%
+  arrange(desc(AVG))
+
+## Top 10 Injuries and fatalities
+fatality_tot <- fatality_tot[1:10,]
+injury_tot <- injury_tot[1:10,]
+fatality_avg <- fatality_avg[1:10,]
+injury_avg <- injury_avg[1:10,]
+
+fatality_tot$TYPE = paste("FATALITIES")
+fatality_avg$TYPE = paste("FATALITIES")
+injury_tot$TYPE = paste("INJURIES")
+injury_avg$TYPE = paste("INJURIES")
+
+health_severity_total <- rbind(fatality_tot, injury_tot)
+health_severity_avg <- rbind(fatality_avg, injury_avg)
+```
+```{r economy_analysis}
+data$eco_dmg <- data$PROPDMG + data$CROPDMG
+
+## Total Economic Damage by event type
+tot_eco_dmg <- data %>% 
+  group_by(EVTYPE) %>%
+  summarize(TOTAL = sum(eco_dmg)) %>%
+  arrange(desc(TOTAL))
+
+## Mean Economic Damage by event type
+avg_eco_dmg <- data %>% 
+  group_by(EVTYPE) %>%
+  summarize(AVG = mean(eco_dmg)) %>%
+  arrange(desc(AVG))
+
+## Top 10 economic damages
+tot_eco_dmg <- tot_eco_dmg[1:10,]
+avg_eco_dmg <- avg_eco_dmg[1:10,]
+
+```
+
+
+
+
+## Results
+
+The Graph shows top 10 events for which the total fatalities and injuries are highest
+
+```{r total_health_dmg}
+plot1 <- ggplot(data=health_severity_total, aes(x=EVTYPE, y=TOTAL)) + geom_bar(aes(fill=TYPE), stat="identity", position="stack") +
+    xlab("Event Type") +
+    ylab('Total Number of Injuries plus Fatalities') + 
+    ggtitle('Total Injuries and Fatalities') + coord_flip() +
+    theme(plot.title = element_text(hjust = 0.5)) 
+
+print(plot1)
+```
+
+From the above graph we can say that Tornado has sever impact on total health damage
+
+-----------------------------------
+
+The following Graph shows top 10 events for which the avergae fatalities and injuries are highest
+
+```{r avg_health_dmg}
+plot2 <- ggplot(data=health_severity_avg, aes(x=EVTYPE, y=AVG)) + geom_bar(aes(fill=TYPE), stat="identity", position="stack") +
+    xlab("Event Type") +
+    ylab('Average of Injuries plus Fatalities') + 
+    ggtitle('Average Injuries and Fatalities') + coord_flip() +
+    theme(plot.title = element_text(hjust = 0.5)) 
+
+print(plot2)
+
+```
+
+From the above graph we can say that Heat wave has severe impact on Injuries and Torando, TSTM wind and , Hail have severe impact  on Fatalities
+
+----------------------
+
+The following Graph shows top 10 events for which the total economic damage is  highest
+
+```{r tot economic_dmg, warning=FALSE}
+plot3 <- ggplot(data=tot_eco_dmg, aes(x=EVTYPE, y=TOTAL, fill = EVTYPE)) + 
+    geom_bar( stat="identity", show_guide = F) +
+    xlab("Event Type") +
+    ylab('Total of Economic Damage') + 
+    ggtitle('Total Economic Damage') + coord_flip() +
+    theme(plot.title = element_text(hjust = 0.5)) 
+
+print(plot3)
+
+
+```
+
+From the above graph we can say that Tornado has severe impact on Total economic damage
+
+---------------------
+
+The following Graph shows top 10 events for which the average economic damage is  highest
+```{r avg_economic_dmg, warning=FALSE}
+plot4 <- ggplot(data=avg_eco_dmg, aes(x=EVTYPE, y=AVG, fill = EVTYPE)) + 
+    geom_bar( stat="identity", show_guide = F) +
+    xlab("Event Type") +
+    ylab('Average of Economic Damage') + 
+    ggtitle('Average Economic Damage') + coord_flip() +
+    theme(plot.title = element_text(hjust = 0.5)) 
+
+print(plot4)
+```
+
+From the above graph we can say that Tropical Storm Gordan has severe impact on Average economic damage.
+
+________________________________________
+
